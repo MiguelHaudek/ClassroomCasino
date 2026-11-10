@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Classroom Casino</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='32' fill='%23a5141f'/%3E%3Ctext x='32' y='44' text-anchor='middle' font-size='34' fill='%23ffffff'%3E%E2%99%A0%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700&family=Instrument+Sans:wght@400;500;600;700&family=Oswald:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-scene="wheel">
+  <header class="topbar">
+    <div class="brand" aria-label="Classroom Casino">
+      <span class="brand-mark">♠&#xFE0E;</span>
+      <span class="brand-name">Classroom Casino</span>
+    </div>
+
+    <div class="scoreboard" aria-label="Score">
+      <div class="sb-side"><span class="sb-label" id="sb-bank-label">The Bank</span><span class="sb-num" id="sb-bank">0</span></div>
+      <span class="sb-sep" aria-hidden="true"></span>
+      <div class="sb-side"><span class="sb-num" id="sb-class">0</span><span class="sb-label">Class</span></div>
+    </div>
+
+    <div class="top-actions">
+      <button class="icon-btn back-btn" id="btn-back" title="Back to the roulette (B)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17M6 6l12 12M18 6 6 18"/></svg>
+        <span>Roulette</span>
+      </button>
+      <button class="icon-btn" id="btn-sound" title="Sound (M)" aria-pressed="true">
+        <svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="m17 9 5 6M22 9l-5 6"/></svg>
+        <span class="sr">Sound</span>
+      </button>
+      <button class="icon-btn" id="btn-fullscreen" title="Fullscreen (F)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        <span class="sr">Fullscreen</span>
+      </button>
+      <button class="icon-btn" id="btn-settings" title="Teacher settings ( , )">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>
+        <span class="sr">Settings</span>
+      </button>
+    </div>
+    <i class="secret-dot" id="secret-dot" aria-hidden="true"></i>
+  </header>
+
+  <main class="stage">
+    <!-- ============================== WHEEL ============================== -->
+    <section class="scene scene-wheel is-active" id="scene-wheel" aria-label="Roulette">
+      <div class="rail rail-roulette">
+        <div class="baize roulette-felt">
+          <div class="roulette" id="roulette" aria-label="Roulette wheel. Click to spin.">
+            <div class="r-plane" id="r-plane">
+              <canvas class="r-layer" id="r-bowl"></canvas>
+              <canvas class="r-layer r-head" id="r-head"></canvas>
+              <div class="r-light" aria-hidden="true"></div>
+            </div>
+            <canvas class="r-ball" id="r-ball" aria-hidden="true"></canvas>
+            <div class="wheel-empty" id="wheel-empty" hidden>
+              <p>No students are marked as here today.</p>
+              <button class="btn btn-primary" type="button">Add students</button>
+            </div>
+          </div>
+
+          <aside class="roulette-side" id="roulette-side" data-state="idle">
+            <div class="board" id="board" aria-label="Roulette layout: every student has a chip on their class number"></div>
+
+            <div class="display" aria-live="polite">
+              <div class="d-pane d-idle">
+                <span class="d-label">Last numbers</span>
+                <div class="history" id="history"></div>
+              </div>
+              <div class="d-pane d-spinning"><span class="d-call" id="d-call">Place your bets</span></div>
+              <div class="d-pane d-result">
+                <div class="d-number" id="d-number">0</div>
+                <div class="d-who">
+                  <span class="d-color" id="d-color"></span>
+                  <strong class="d-name" id="d-name"></strong>
+                  <span class="d-line">plays blackjack against <b id="d-dealer">The Bank</b></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="croupier">
+              <div class="c-idle">
+                <button class="btn btn-primary btn-spin" id="btn-spin">Spin <kbd>Space</kbd></button>
+              </div>
+              <div class="c-result">
+                <button class="btn btn-primary" id="btn-deal">Deal the cards <kbd>Enter</kbd></button>
+                <button class="btn btn-quiet" id="btn-absent" title="Mark as not here today and spin again">Not here <kbd>A</kbd></button>
+                <button class="btn btn-quiet" id="btn-respin" title="Spin again without dealing">Spin again <kbd>R</kbd></button>
+              </div>
+            </div>
+            <p class="sample-hint" id="sample-hint" hidden>These are sample names. <button type="button" class="link-btn">Add your class</button></p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== TABLE ============================== -->
+    <section class="scene scene-table" id="scene-table" aria-label="Blackjack table">
+      <div class="table rail">
+        <div class="felt baize" id="felt">
+          <div class="chip-rack" id="chip-rack" aria-hidden="true">
+            <i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i><i class="c5"></i><i class="c6"></i><i class="c7"></i><i class="c8"></i>
+          </div>
+
+          <div class="shoe" id="shoe" aria-hidden="true">
+            <div class="shoe-body"><div class="shoe-stack"></div><div class="shoe-mouth"></div></div>
+            <span class="shoe-count" id="shoe-count"></span>
+          </div>
+          <div class="discard" id="discard" aria-hidden="true"><div class="discard-pile"></div></div>
+
+          <div class="zone dealer-zone">
+            <div class="plate dealer-plate">
+              <span class="plate-role">Dealer</span>
+              <strong id="dealer-name">The Bank</strong>
+            </div>
+            <div class="hand-row dealer-row" id="dealer-row"></div>
+          </div>
+
+          <div class="felt-print" aria-hidden="true">
+            <svg viewBox="0 0 1000 160" preserveAspectRatio="xMidYMid meet">
+              <path id="arc-top" d="M 60 22 Q 500 122 940 22" fill="none"/>
+              <path class="print-line" d="M 110 66 Q 500 166 890 66" fill="none"/>
+              <path id="arc-mid" d="M 130 88 Q 500 188 870 88" fill="none"/>
+              <path class="print-line" d="M 150 110 Q 500 210 850 110" fill="none"/>
+              <text class="print-big"><textPath href="#arc-top" startOffset="50%" text-anchor="middle">BLACKJACK PAYS 3 TO 2</textPath></text>
+              <text class="print-small"><textPath href="#arc-mid" startOffset="50%" text-anchor="middle" id="rules-line">DEALER MUST DRAW TO 16 AND STAND ON ALL 17s</textPath></text>
+            </svg>
+          </div>
+
+          <div class="zone player-zone">
+            <div class="hand-row player-row" id="player-row"></div>
+            <div class="plate player-plate" id="player-plate">
+              <span class="plate-role">Player</span>
+              <strong id="player-name"></strong>
+            </div>
+          </div>
+
+          <div class="table-toast" id="table-toast" role="status" aria-live="polite"></div>
+          <div class="banner" id="banner" role="status" aria-live="assertive"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="actions" id="actions" aria-label="Your move">
+          <button class="act act-hit" data-act="hit"><span>Hit</span><kbd>H</kbd></button>
+          <button class="act act-stand" data-act="stand"><span>Stand</span><kbd>S</kbd></button>
+          <button class="act act-double" data-act="double"><span>Double</span><kbd>D</kbd></button>
+          <button class="act act-split" data-act="split"><span>Split</span><kbd>P</kbd></button>
+        </div>
+        <div class="post-actions" id="post-actions">
+          <button class="btn btn-primary" id="btn-next">Spin for the next student <kbd>N</kbd></button>
+          <button class="btn btn-quiet" id="btn-rematch">Deal another hand <kbd>R</kbd></button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================== REVEAL ============================== -->
+  <div class="ghost-layer" id="ghost-layer" aria-hidden="true"></div>
+  <canvas class="fx-canvas" id="fx-canvas" aria-hidden="true"></canvas>
+
+  <!-- ============================== SETTINGS ============================== -->
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Teacher settings">
+    <header class="drawer-head">
+      <div>
+        <h2>Teacher settings</h2>
+        <p>Open this before you put the screen on the projector.</p>
+      </div>
+      <button class="icon-btn" id="drawer-close" title="Close (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg><span class="sr">Close</span></button>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="students">Students</button>
+      <button class="tab" role="tab" data-tab="odds">Blackjack odds</button>
+      <button class="tab" role="tab" data-tab="wheel">Roulette</button>
+      <button class="tab" role="tab" data-tab="table">Table</button>
+      <button class="tab" role="tab" data-tab="data">Save &amp; reset</button>
+    </nav>
+
+    <div class="drawer-body">
+      <!-- Students -->
+      <section class="panel" data-panel="students">
+        <form class="add-form" id="add-form">
+          <label for="add-names">Add students</label>
+          <textarea id="add-names" rows="3" placeholder="Paste names: one per line, or separated by commas"></textarea>
+          <button class="btn btn-primary small" type="submit">Add to class</button>
+        </form>
+
+        <div class="roster-head">
+          <span id="roster-count"></span>
+          <div class="roster-tools">
+            <button class="link-btn" type="button" id="all-present">Everyone is here</button>
+            <button class="link-btn" type="button" id="sort-az">Sort A–Z</button>
+            <button class="link-btn" type="button" id="reset-weights">Reset chances and luck</button>
+          </div>
+        </div>
+        <div class="roster-cols" aria-hidden="true">
+          <span>Here</span><span>Name</span><span>Chance to be called</span><span></span><span>Blackjack luck</span><span>Record</span><span></span>
+        </div>
+        <div class="roster" id="roster"></div>
+        <p class="note">Everyone has the same chance to be called. Pick 2×, 3× or 5× to call a student more often. The percentage is their real chance on the next spin. A student's roulette number is their place in this list. Blackjack luck overrides the default win chance for that student.</p>
+      </section>
+
+      <!-- Odds -->
+      <section class="panel" data-panel="odds" hidden>
+        <label class="switch-row">
+          <input type="checkbox" data-set="fairGame">
+          <span class="switch" aria-hidden="true"></span>
+          <span><strong>Play fair</strong><small>Real random cards, no steering. Students win about 42% of hands, like in a casino.</small></span>
+        </label>
+
+        <div id="odds-controls">
+          <div class="field">
+            <div class="field-head"><label for="set-win">Students win</label><output id="win-chance-out"></output></div>
+            <input type="range" id="set-win" min="5" max="95" step="5" data-set="winChance" data-scale="100">
+            <div class="scale"><span>Bank almost always wins</span><span>Students almost always win</span></div>
+          </div>
+
+          <div class="field">
+            <div class="field-head"><label for="set-strength">How hard the deck is steered</label><output id="strength-out"></output></div>
+            <input type="range" id="set-strength" min="10" max="100" step="5" data-set="strength" data-scale="100">
+            <div class="scale"><span>Subtle, looks natural</span><span>Strong, follows your setting closely</span></div>
+            <p class="note" id="strength-note"></p>
+          </div>
+        </div>
+
+        <p class="note" id="session-stats"></p>
+
+        <div class="secret-keys">
+          <h3>Secret keys during class</h3>
+          <p>Press these any time, even in the middle of a hand. They only change the current or next hand, then everything goes back to your settings.</p>
+          <dl>
+            <dt><kbd>1</kbd></dt><dd>The student wins this hand</dd>
+            <dt><kbd>2</kbd></dt><dd>The bank wins this hand</dd>
+            <dt><kbd>3</kbd></dt><dd>Play this hand completely fair</dd>
+            <dt><kbd>0</kbd></dt><dd>Cancel, use the settings again</dd>
+          </dl>
+          <label class="switch-row compact">
+            <input type="checkbox" data-set="showDot">
+            <span class="switch" aria-hidden="true"></span>
+            <span><strong>Show a tiny dot in the top bar while a secret key is active</strong><small>Gold: student wins, red: bank wins, grey: fair.</small></span>
+          </label>
+        </div>
+
+        <p class="note">How it works: every card comes from a real shuffled shoe and the rules never change. When a hand is steered, the next card is picked from the shoe with a lean towards the outcome you want, so it still plays like real blackjack.</p>
+      </section>
+
+      <!-- Wheel -->
+      <section class="panel" data-panel="wheel" hidden>
+        <label class="switch-row">
+          <input type="checkbox" data-set="avoidRepeats">
+          <span class="switch" aria-hidden="true"></span>
+          <span><strong>Give just-called students a break</strong><small>Off: everyone has the same chance on every spin. On: someone who was just called can’t come up on the next spin, and their chance comes back gradually.</small></span>
+        </label>
+
+        <div class="field">
+          <div class="field-head"><label for="set-recovery">Back to full chance after</label><output id="recovery-out"></output></div>
+          <input type="range" id="set-recovery" min="1" max="10" step="1" data-set="recoverySpins">
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="force-next">Next spin lands on</label></div>
+          <select id="force-next"></select>
+          <p class="note">Used for one spin only, then the wheel goes back to the chances. This choice is not saved.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-head"><label for="set-spin">Spin length</label><output id="spin-out"></output></div>
+          <input type="range" id="set-spin" min="5" max="15" step="1" data-set="spinSeconds">
+        </div>
+      </section>
+
+      <!-- Table -->
+      <section class="panel" data-panel="table" hidden>
+        <div class="field">
+          <div class="field-head"><label for="set-dealer">Dealer name</label></div>
+          <input type="text" id="set-dealer" data-set="dealerName" maxlength="28" placeholder="The Bank">
+        </div>
+
+        <h3>What’s at stake</h3>
+        <div class="field">
+          <div class="field-head"><label for="set-stake-win">If the student wins</label></div>
+          <input type="text" id="set-stake-win" data-set="stakeWin" maxlength="80">
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="set-stake-lose">If the bank wins</label></div>
+          <input type="text" id="set-stake-lose" data-set="stakeLose" maxlength="80">
+        </div>
+        <div class="field">
+          <div class="field-head"><label for="set-stake-push">If it’s a tie</label></div>
+          <input type="text" id="set-stake-push" data-set="stakePush" maxlength="80">
+        </div>
+
+        <h3>Rules</h3>
+        <div class="field">
+          <div class="field-head"><label for="set-decks">Decks in the shoe</label></div>
+          <select id="set-decks" data-set="decks" data-num="1">
+            <option value="1">1 deck</option><option value="2">2 decks</option><option value="4">4 decks</option><option value="6">6 decks</option><option value="8">8 decks</option>
+          </select>
+        </div>
+        <label class="switch-row compact"><input type="checkbox" data-set="h17"><span class="switch" aria-hidden="true"></span><span><strong>Bank hits on soft 17</strong></span></label>
+        <label class="switch-row compact"><input type="checkbox" data-set="allowDouble"><span class="switch" aria-hidden="true"></span><span><strong>Allow doubling down</strong></span></label>
+        <label class="switch-row compact"><input type="checkbox" data-set="allowSplit"><span class="switch" aria-hidden="true"></span><span><strong>Allow splitting pairs</strong></span></label>
+        <label class="switch-row compact"><input type="checkbox" data-set="das"><span class="switch" aria-hidden="true"></span><span><strong>Allow doubling after a split</strong></span></label>
+
+        <h3>Show</h3>
+        <div class="field">
+          <div class="field-head"><label for="set-speed">Animation speed</label></div>
+          <select id="set-speed" data-set="speed" data-num="1">
+            <option value="1.35">Slow and dramatic</option><option value="1">Normal</option><option value="0.65">Quick</option>
+          </select>
+        </div>
+        <label class="switch-row compact"><input type="checkbox" id="set-sound" data-set="sound"><span class="switch" aria-hidden="true"></span><span><strong>Sound effects</strong></span></label>
+        <div class="field">
+          <div class="field-head"><label for="set-volume">Volume</label><output id="volume-out"></output></div>
+          <input type="range" id="set-volume" min="0" max="100" step="5" data-set="volume" data-scale="100">
+        </div>
+      </section>
+
+      <!-- Data -->
+      <section class="panel" data-panel="data" hidden>
+        <p class="note">Everything is saved automatically in this browser on this computer. To use your class list on another computer, save it to a file and load it there.</p>
+        <div class="button-row">
+          <button class="btn btn-primary small" type="button" id="export-data">Save class list to a file</button>
+          <label class="btn btn-quiet small file-btn">Load class list from a file<input type="file" id="import-file" accept="application/json,.json"></label>
+        </div>
+        <h3>Start over</h3>
+        <div class="button-row">
+          <button class="btn btn-quiet small" type="button" id="reset-stats">Clear score and history</button>
+          <button class="btn btn-danger small" type="button" id="reset-all">Delete everything</button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <script src="js/audio.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/blackjack.js"></script>
+  <script src="js/roulette.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
